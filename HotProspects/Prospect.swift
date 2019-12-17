@@ -8,19 +8,12 @@
 
 import Foundation
 
-class Prospect: Identifiable, Codable, Comparable {
+class Prospect: Identifiable, Codable {
     let id = UUID()
     var name = "Anonymous"
     var emailAddress = ""
     fileprivate(set) var isContacted = false
-    
-    static func == (lhs: Prospect, rhs: Prospect) -> Bool {
-        lhs.name == rhs.name
-    }
-    
-    public static func < (lhs: Prospect, rhs: Prospect) -> Bool {
-       lhs.name < rhs.name
-    }
+    var createdAt = ""
 }
 
 class Prospects: ObservableObject {

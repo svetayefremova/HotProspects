@@ -15,7 +15,7 @@ enum FilterType {
 }
 
 enum SortedType {
-    case recent, name
+    case none, recent, name
 }
 
 struct ProspectsView: View {
@@ -31,10 +31,21 @@ struct ProspectsView: View {
             return prospects.people.filter { !$0.isContacted }
         }
     }
+    var sortedProspects: [Prospect] {
+        switch sortedBy {
+        case .none:
+            return filteredProspects
+        case .recent:
+            return filteredProspects.sorted(by: { $0.createdAt > $1.createdAt })
+        case .name:
+            return filteredProspects.sorted(by: { $0.name < $1.name })
+        }
+    }
+    @State private var sortedBy: SortedType = .none
+    
     @State private var isShowingScanner = false
     @State private var showingSortedSheet = false
-    
-    @State private var sortedBy = SortedType.recent
+    @State private var isSorted = false
     
     var title: String {
         switch filter {
@@ -50,7 +61,7 @@ struct ProspectsView: View {
     var body: some View {
         NavigationView {
             List {
-                ForEach(sortedBy == SortedType.recent ? filteredProspects : filteredProspects.sorted()) { prospect in
+                ForEach(isSorted ? sortedProspects : filteredProspects) { prospect in
                     HStack {
                         VStack(alignment: .leading) {
                             Text(prospect.name)
@@ -91,8 +102,18 @@ struct ProspectsView: View {
         }
         .actionSheet(isPresented: $showingSortedSheet) {
             ActionSheet(title: Text("Select a sorted filter"), buttons: [
-                .default(Text("By name")) { self.sortedBy = SortedType.name },
-                .default(Text("By most recent")) { self.sortedBy = SortedType.recent },
+                .default(Text("By name")) {
+                    self.sortedBy = SortedType.name
+                    self.isSorted = true
+                },
+                .default(Text("By most recent")) {
+                    self.sortedBy = SortedType.recent
+                    self.isSorted = true
+                },
+                .destructive(Text("Remove sorting")) {
+                    self.sortedBy = SortedType.none
+                    self.isSorted = false
+                },
                 .cancel()
             ])
         }
@@ -143,7 +164,17 @@ struct ProspectsView: View {
            let person = Prospect()
            person.name = details[0]
            person.emailAddress = details[1]
+           
+           let currentDateTime = Date()
 
+           // initialize the date formatter and set the style
+           let formatter = DateFormatter()
+           formatter.timeStyle = .medium
+           formatter.dateStyle = .long
+
+           // get the date time String from the date object
+           person.createdAt = formatter.string(from: currentDateTime)
+           
            self.prospects.add(person)
        case .failure(let error):
            print("Scanning failed", error)
